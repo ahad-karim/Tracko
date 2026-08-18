@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../database/database.dart';
 import '../providers/database_provider.dart';
+import 'add_transaction_screen.dart';
 
 // Notice we use ConsumerWidget instead of StatelessWidget to use Riverpod
 class HomeScreen extends ConsumerWidget {
@@ -64,7 +65,12 @@ class HomeScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // TODO: Navigate to the AI input screen
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AddTransactionScreen(),
+            ),
+          );
         },
         child: const Icon(Icons.add),
       ),
