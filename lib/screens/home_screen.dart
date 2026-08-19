@@ -32,7 +32,7 @@ class HomeScreen extends ConsumerWidget {
         final transactions = snapshot.data ?? [];
 
         if (transactions.isEmpty) {
-          return const Center(child: Text('No transactions yet. Add one!'));
+          return const Center(child: Text('No transactions yet!!!! Add one!'));
         }
 
         return ListView.builder(
