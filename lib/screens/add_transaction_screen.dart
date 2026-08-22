@@ -20,7 +20,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   String _selectedCategory = 'food'; // Default category
 
   // A basic list of categories for the dropdown
-  final List<String> _categories = ['food', 'transport', 'salary', 'utilities', 'other'];
+  final List<String> _categories = ['food', 'transport', 'salary', 'utilities', 'other', 'movie'];
 
   @override
   void dispose() {
