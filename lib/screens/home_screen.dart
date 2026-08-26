@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../database/database.dart';
 import '../providers/database_provider.dart';
 import 'add_transaction_screen.dart';
+import '../services/nlp_service.dart'; // <-- 1. Added the import for the AI service
 
 // Notice we use ConsumerWidget instead of StatelessWidget to use Riverpod
 class HomeScreen extends ConsumerWidget {
@@ -16,53 +17,71 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard'),
+        actions: [
+          // <-- 2. Added the test button to the top right corner
+          IconButton(
+            icon: const Icon(Icons.android),
+            tooltip: 'Test AI Model',
+            onPressed: () async {
+              final nlp = NLPService();
+
+              await nlp.initializeModel();
+              final result = nlp.classifyTransaction("I spent 500 taka on a massive burger at Unique Flavours");
+
+              print("====================================");
+              print("🤖 AI PREDICTION RESULT: $result");
+              print("====================================");
+            },
+          ),
+        ],
       ),
       // StreamBuilder listens to the Drift stream
       body: StreamBuilder<List<Transaction>>(
-      stream: db.watchAllTransactions(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
+        stream: db.watchAllTransactions(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-        if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        }
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
 
-        final transactions = snapshot.data ?? [];
+          final transactions = snapshot.data ?? [];
 
-        if (transactions.isEmpty) {
-          return const Center(child: Text('No transactions yet!!!! Add one!'));
-        }
+          if (transactions.isEmpty) {
+            return const Center(child: Text('No transactions yet!!!! Add one!'));
+          }
 
-        return ListView.builder(
-          itemCount: transactions.length,
-          itemBuilder: (context, index) {
-            final transaction = transactions[index];
-            // Display each transaction as a list item
-            return ListTile(
-              leading: CircleAvatar(
-                backgroundColor: transaction.type == 'income' ? Colors.green : Colors.red,
-                child: Icon(
-                  transaction.type == 'income' ? Icons.arrow_upward : Icons.arrow_downward,
-                  color: Colors.white,
+          return ListView.builder(
+            itemCount: transactions.length,
+            itemBuilder: (context, index) {
+              final transaction = transactions[index];
+              // Display each transaction as a list item
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: transaction.type == 'income' ? Colors.green : Colors.red,
+                  child: Icon(
+                    transaction.type == 'income' ? Icons.arrow_upward : Icons.arrow_downward,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-              title: Text(transaction.category),
-              subtitle: Text(transaction.date.toString().split(' ')[0]),
-              trailing: Text(
-                '\$${transaction.amount.toStringAsFixed(2)}',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              onLongPress: () {
-                // Delete on long press
-                db.deleteTransaction(transaction.id);
-              },
-            );
-          },
-        );
-      },
+                title: Text(transaction.category),
+                subtitle: Text(transaction.date.toString().split(' ')[0]),
+                trailing: Text(
+                  '\$${transaction.amount.toStringAsFixed(2)}',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                onLongPress: () {
+                  // Delete on long press
+                  db.deleteTransaction(transaction.id);
+                },
+              );
+            },
+          );
+        },
       ),
+
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
