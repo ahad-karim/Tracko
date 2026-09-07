@@ -1,28 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'screens/home_screen.dart'; // We will create this next
+import 'screens/splash_screen.dart';
+import 'theme/app_theme.dart';
 
 void main() {
-  runApp(
-    // ProviderScope stores the state of all providers
-    const ProviderScope(
-      child: MoneyTrackerApp(),
-    ),
-  );
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const TrackoApp());
 }
 
-class MoneyTrackerApp extends StatelessWidget {
-  const MoneyTrackerApp({Key? key}) : super(key: key);
+class TrackoApp extends StatelessWidget {
+  const TrackoApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Money Tracker',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        useMaterial3: true,
-      ),
-      home: const HomeScreen(),
+      title: 'TRACKO - Money Tracker',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      home: const SplashScreen(),
     );
   }
 }
