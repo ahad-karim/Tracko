@@ -1,149 +1,148 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_styles.dart';
+import '../../utils/report_timeframe_utils.dart';
 
 class WealthLineChart extends StatelessWidget {
-  const WealthLineChart({super.key});
+  final ReportData reportData;
+
+  const WealthLineChart({
+    super.key,
+    required this.reportData,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final spots = const [
-      FlSpot(0, 0),
-      FlSpot(1, 0),
-      FlSpot(2, 0),
-      FlSpot(3, 0),
-      FlSpot(4, 0),
-      FlSpot(5, 0),
-      FlSpot(6, 0),
-    ];
+    final buckets = reportData.buckets;
 
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
+    if (buckets.isEmpty || buckets.every((b) => b.cumulativeNetWorth == 0)) {
+      return const _EmptyChartCard(
+        title: 'Wealth Trend',
+        message: 'No transactions yet to plot a wealth trend.',
+      );
+    }
+
+    final values = buckets.map((b) => b.cumulativeNetWorth).toList();
+    final double maxY = values.reduce((a, b) => a > b ? a : b);
+    final double minY = values.reduce((a, b) => a < b ? a : b);
+    // Add headroom so the line/dots never touch the chart edges.
+    final double span = (maxY - minY).abs();
+    final double padding = span == 0 ? (maxY.abs() * 0.2 + 10) : span * 0.2;
+    final double chartMaxY = maxY + padding;
+    final double chartMinY = (minY - padding) < 0 && minY >= 0 ? 0 : minY - padding;
 
     return Container(
-      height: 220,
-      padding: const EdgeInsets.only(right: 16, left: 6, top: 16, bottom: 8),
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.cardSurface,
         borderRadius: AppStyles.borderRadiusMedium,
         border: Border.all(color: AppColors.divider),
-        boxShadow: AppStyles.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 10, bottom: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Wealth Trend',
-                  style: AppStyles.headingSmall,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Wealth Trend', style: AppStyles.headingSmall),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.deepPurple.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.palePurple,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '0.0% growth',
-                    style: AppStyles.bodySmall.copyWith(
-                      color: AppColors.deepPurple,
-                      fontWeight: FontWeight.bold,
-                    ),
+                child: Text(
+                  '${reportData.growthPercent >= 0 ? '+' : ''}${reportData.growthPercent.toStringAsFixed(1)}% growth',
+                  style: AppStyles.bodySmall.copyWith(
+                    color: AppColors.deepPurple,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          Expanded(
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 200,
             child: LineChart(
               LineChartData(
+                minY: chartMinY,
+                maxY: chartMaxY,
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
-                  horizontalInterval: 2.5,
-                  getDrawingHorizontalLine: (value) {
-                    return FlLine(
-                      color: AppColors.divider,
-                      strokeWidth: 1,
-                    );
-                  },
+                  horizontalInterval: (chartMaxY - chartMinY) == 0 ? 1 : (chartMaxY - chartMinY) / 4,
+                  getDrawingHorizontalLine: (value) => FlLine(
+                    color: AppColors.divider,
+                    strokeWidth: 1,
+                  ),
                 ),
+                borderData: FlBorderData(show: false),
                 titlesData: FlTitlesData(
-                  show: true,
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      interval: 2.5,
-                      getTitlesWidget: (value, meta) {
-                        return Text(
-                          '\$${value.toInt()}k',
-                          style: AppStyles.bodySmall.copyWith(fontSize: 10),
-                        );
-                      },
-                      reservedSize: 32,
+                      reservedSize: 44,
+                      interval: (chartMaxY - chartMinY) == 0 ? 1 : (chartMaxY - chartMinY) / 4,
+                      getTitlesWidget: (value, meta) => Text(
+                        _formatCompact(value),
+                        style: AppStyles.bodySmall.copyWith(fontSize: 10),
+                      ),
                     ),
                   ),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 24,
-                      interval: 1,
                       getTitlesWidget: (value, meta) {
                         final index = value.toInt();
-                        if (index >= 0 && index < months.length) {
-                          return Text(
-                            months[index],
-                            style: AppStyles.bodySmall.copyWith(fontSize: 11),
-                          );
+                        if (index < 0 || index >= buckets.length) {
+                          return const SizedBox.shrink();
                         }
-                        return const SizedBox.shrink();
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                            buckets[index].label,
+                            style: AppStyles.bodySmall.copyWith(fontSize: 10),
+                          ),
+                        );
                       },
                     ),
                   ),
                 ),
-                borderData: FlBorderData(show: false),
-                minX: 0,
-                maxX: 6,
-                minY: 0,
-                maxY: 10,
                 lineTouchData: LineTouchData(
-                  enabled: true,
                   touchTooltipData: LineTouchTooltipData(
-                    getTooltipColor: (spot) => AppColors.deepPurple,
-                    getTooltipItems: (touchedSpots) {
-                      return touchedSpots.map((spot) {
-                        return LineTooltipItem(
-                          '\$${spot.y.toStringAsFixed(2)}k',
-                          const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                        );
-                      }).toList();
-                    },
+                    getTooltipItems: (spots) => spots.map((spot) {
+                      final index = spot.x.toInt();
+                      if (index < 0 || index >= buckets.length) return null;
+                      final bucket = buckets[index];
+                      return LineTooltipItem(
+                        '${bucket.label}\n\$${bucket.cumulativeNetWorth.toStringAsFixed(2)}',
+                        AppStyles.bodySmall.copyWith(color: Colors.white),
+                      );
+                    }).toList(),
                   ),
                 ),
                 lineBarsData: [
                   LineChartBarData(
-                    spots: spots,
+                    spots: [
+                      for (int i = 0; i < buckets.length; i++)
+                        FlSpot(i.toDouble(), buckets[i].cumulativeNetWorth),
+                    ],
                     isCurved: true,
-                    curveSmoothness: 0.35,
-                    color: AppColors.primaryPurple,
-                    barWidth: 3.5,
-                    isStrokeCapRound: true,
+                    color: AppColors.deepPurple,
+                    barWidth: 3,
                     dotData: FlDotData(
                       show: true,
-                      getDotPainter: (spot, percent, barData, index) {
-                        return FlDotCirclePainter(
-                          radius: index == 6 ? 5 : 3,
-                          color: index == 6 ? AppColors.deepPurple : AppColors.primaryPurple,
-                          strokeWidth: 2,
-                          strokeColor: Colors.white,
-                        );
-                      },
+                      getDotPainter: (spot, percent, bar, index) => FlDotCirclePainter(
+                        radius: index == buckets.length - 1 ? 5 : 3,
+                        color: AppColors.deepPurple,
+                        strokeWidth: 0,
+                      ),
                     ),
                     belowBarData: BarAreaData(
                       show: true,
@@ -151,8 +150,8 @@ class WealthLineChart extends StatelessWidget {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          AppColors.primaryPurple.withOpacity(0.3),
-                          AppColors.primaryPurple.withOpacity(0.0),
+                          AppColors.deepPurple.withOpacity(0.18),
+                          AppColors.deepPurple.withOpacity(0.0),
                         ],
                       ),
                     ),
@@ -161,6 +160,50 @@ class WealthLineChart extends StatelessWidget {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  static String _formatCompact(double value) {
+    final absValue = value.abs();
+    final sign = value < 0 ? '-' : '';
+    if (absValue >= 1000) {
+      return '$sign\$${(absValue / 1000).toStringAsFixed(absValue % 1000 == 0 ? 0 : 1)}k';
+    }
+    return '$sign\$${absValue.toStringAsFixed(0)}';
+  }
+}
+
+class _EmptyChartCard extends StatelessWidget {
+  final String title;
+  final String message;
+
+  const _EmptyChartCard({required this.title, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.cardSurface,
+        borderRadius: AppStyles.borderRadiusMedium,
+        border: Border.all(color: AppColors.divider),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: AppStyles.headingSmall),
+          const SizedBox(height: 40),
+          Center(
+            child: Text(
+              message,
+              style: AppStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 40),
         ],
       ),
     );

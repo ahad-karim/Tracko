@@ -12,6 +12,7 @@ class TransactionsScreen extends StatefulWidget {
 
   const TransactionsScreen({
     super.key,
+    //ahad
     required this.transactions,
     this.onAddTransaction,
   });

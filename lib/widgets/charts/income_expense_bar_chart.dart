@@ -1,32 +1,35 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_styles.dart';
+import '../../utils/report_timeframe_utils.dart';
 
 class IncomeExpenseBarChart extends StatelessWidget {
-  const IncomeExpenseBarChart({super.key});
+  final ReportData reportData;
+
+  const IncomeExpenseBarChart({
+    super.key,
+    required this.reportData,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final months = ['Apr', 'May', 'Jun', 'Jul', 'Aug'];
+    final buckets = reportData.buckets;
+    final hasData = buckets.any((b) => b.income > 0 || b.expense > 0);
 
-    // Income vs Expense dataset (in $1,000s)
-    final barData = [
-      {'income': 7.2, 'expense': 4.8},
-      {'income': 7.8, 'expense': 5.1},
-      {'income': 8.0, 'expense': 4.9},
-      {'income': 8.1, 'expense': 5.3},
-      {'income': 8.42, 'expense': 5.12},
-    ];
+    final double maxVal = buckets.fold<double>(
+      0,
+      (max, b) => [max, b.income, b.expense].reduce((a, c) => a > c ? a : c),
+    );
+    final double chartMaxY = maxVal == 0 ? 10 : maxVal * 1.2;
 
     return Container(
-      height: 250,
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.cardSurface,
         borderRadius: AppStyles.borderRadiusMedium,
         border: Border.all(color: AppColors.divider),
-        boxShadow: AppStyles.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -37,143 +40,154 @@ class IncomeExpenseBarChart extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Text('Income vs Expense', style: AppStyles.headingSmall),
                   Text(
-                    'Income vs Expense',
-                    style: AppStyles.headingSmall,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Monthly cashflow balance',
-                    style: AppStyles.bodySmall,
+                    'Cashflow balance',
+                    style: AppStyles.bodySmall.copyWith(color: AppColors.textSecondary),
                   ),
                 ],
               ),
-              Row(
+              const Row(
                 children: [
-                  _buildLegend(color: AppColors.incomeGreen, label: 'Income'),
-                  const SizedBox(width: 12),
-                  _buildLegend(color: AppColors.deepPurple, label: 'Expense'),
+                  _LegendDot(color: AppColors.incomeGreen, label: 'Income'),
+                  SizedBox(width: 12),
+                  _LegendDot(color: AppColors.deepPurple, label: 'Expense'),
                 ],
               ),
             ],
           ),
           const SizedBox(height: 16),
-          Expanded(
-            child: BarChart(
-              BarChartData(
-                alignment: BarChartAlignment.spaceAround,
-                maxY: 10,
-                barTouchData: BarTouchData(
-                  enabled: true,
-                  touchTooltipData: BarTouchTooltipData(
-                    getTooltipColor: (group) => AppColors.textPrimary,
-                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      final label = rodIndex == 0 ? 'Income' : 'Expense';
-                      return BarTooltipItem(
-                        '$label: \$${rod.toY.toStringAsFixed(2)}k',
-                        const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                      );
-                    },
-                  ),
+          if (!hasData)
+            SizedBox(
+              height: 160,
+              child: Center(
+                child: Text(
+                  'No transactions in this period yet.',
+                  style: AppStyles.bodySmall.copyWith(color: AppColors.textSecondary),
                 ),
-                titlesData: FlTitlesData(
-                  show: true,
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 28,
-                      interval: 2.5,
-                      getTitlesWidget: (value, meta) {
-                        return Text(
-                          '\$${value.toInt()}k',
+              ),
+            )
+          else
+            SizedBox(
+              height: 220,
+              child: BarChart(
+                BarChartData(
+                  maxY: chartMaxY,
+                  alignment: BarChartAlignment.spaceAround,
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    horizontalInterval: chartMaxY / 4,
+                    getDrawingHorizontalLine: (value) => FlLine(
+                      color: AppColors.divider,
+                      strokeWidth: 1,
+                    ),
+                  ),
+                  borderData: FlBorderData(show: false),
+                  titlesData: FlTitlesData(
+                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 44,
+                        interval: chartMaxY / 4,
+                        getTitlesWidget: (value, meta) => Text(
+                          _formatCompact(value),
                           style: AppStyles.bodySmall.copyWith(fontSize: 10),
+                        ),
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 24,
+                        getTitlesWidget: (value, meta) {
+                          final index = value.toInt();
+                          if (index < 0 || index >= buckets.length) {
+                            return const SizedBox.shrink();
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Text(
+                              buckets[index].label,
+                              style: AppStyles.bodySmall.copyWith(fontSize: 10),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  barTouchData: BarTouchData(
+                    touchTooltipData: BarTouchTooltipData(
+                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                        final index = group.x.toInt();
+                        if (index < 0 || index >= buckets.length) return null;
+                        final bucket = buckets[index];
+                        final isIncome = rodIndex == 0;
+                        final value = isIncome ? bucket.income : bucket.expense;
+                        final label = isIncome ? 'Income' : 'Expense';
+                        return BarTooltipItem(
+                          '${bucket.label}\n$label: \$${value.toStringAsFixed(2)}',
+                          AppStyles.bodySmall.copyWith(color: Colors.white),
                         );
                       },
                     ),
                   ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 24,
-                      getTitlesWidget: (value, meta) {
-                        final index = value.toInt();
-                        if (index >= 0 && index < months.length) {
-                          return Text(
-                            months[index],
-                            style: AppStyles.bodySmall.copyWith(fontSize: 11),
-                          );
-                        }
-                        return const SizedBox.shrink();
-                      },
-                    ),
-                  ),
-                ),
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  horizontalInterval: 2.5,
-                  getDrawingHorizontalLine: (value) => FlLine(
-                    color: AppColors.divider,
-                    strokeWidth: 1,
-                  ),
-                ),
-                borderData: FlBorderData(show: false),
-                barGroups: barData.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final item = entry.value;
-                  return BarChartGroupData(
-                    x: index,
-                    barRods: [
-                      BarChartRodData(
-                        toY: item['income']!,
-                        color: AppColors.incomeGreen,
-                        width: 10,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(4),
-                          topRight: Radius.circular(4),
-                        ),
+                  barGroups: [
+                    for (int i = 0; i < buckets.length; i++)
+                      BarChartGroupData(
+                        x: i,
+                        barRods: [
+                          BarChartRodData(
+                            toY: buckets[i].income,
+                            color: AppColors.incomeGreen,
+                            width: 7,
+                            borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
+                          ),
+                          BarChartRodData(
+                            toY: buckets[i].expense,
+                            color: AppColors.deepPurple,
+                            width: 7,
+                            borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
+                          ),
+                        ],
+                        barsSpace: 4,
                       ),
-                      BarChartRodData(
-                        toY: item['expense']!,
-                        color: AppColors.deepPurple,
-                        width: 10,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(4),
-                          topRight: Radius.circular(4),
-                        ),
-                      ),
-                    ],
-                  );
-                }).toList(),
+                  ],
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildLegend({required Color color, required String label}) {
+  static String _formatCompact(double value) {
+    if (value >= 1000) {
+      return '\$${(value / 1000).toStringAsFixed(value % 1000 == 0 ? 0 : 1)}k';
+    }
+    return '\$${value.toStringAsFixed(0)}';
+  }
+}
+
+class _LegendDot extends StatelessWidget {
+  final Color color;
+  final String label;
+
+  const _LegendDot({required this.color, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
     return Row(
       children: [
         Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(2),
-          ),
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 4),
-        Text(
-          label,
-          style: AppStyles.bodySmall.copyWith(
-            fontWeight: FontWeight.w500,
-            fontSize: 11,
-          ),
-        ),
+        Text(label, style: AppStyles.bodySmall.copyWith(fontSize: 11)),
       ],
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_styles.dart';
 import '../../models/transaction_model.dart';
+import '../../utils/report_timeframe_utils.dart';
 import '../../widgets/charts/income_expense_bar_chart.dart';
 import '../../widgets/charts/wealth_line_chart.dart';
 
@@ -20,11 +21,35 @@ class ReportsScreen extends StatefulWidget {
 class _ReportsScreenState extends State<ReportsScreen> {
   int _selectedTimeframeIndex = 1; // 0: Weekly, 1: Monthly, 2: Yearly
 
+  ReportTimeframe get _selectedTimeframe {
+    switch (_selectedTimeframeIndex) {
+      case 0:
+        return ReportTimeframe.weekly;
+      case 2:
+        return ReportTimeframe.yearly;
+      case 1:
+      default:
+        return ReportTimeframe.monthly;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final double totalIncome = widget.transactions.where((tx) => tx.isIncome).fold(0.0, (sum, tx) => sum + tx.amount);
-    final double totalExpense = widget.transactions.where((tx) => !tx.isIncome).fold(0.0, (sum, tx) => sum + tx.amount);
-    final double netWorth = totalIncome - totalExpense;
+    // Single source of truth: bucket the transactions once for the
+    // selected timeframe, then derive every number on screen from it.
+    final ReportData reportData = buildReportData(
+      widget.transactions,
+      _selectedTimeframe,
+    );
+
+    final double periodIncome =
+    reportData.buckets.fold(0.0, (sum, b) => sum + b.income);
+    final double periodExpense =
+    reportData.buckets.fold(0.0, (sum, b) => sum + b.expense);
+    final double netWorth = reportData.buckets.isNotEmpty
+        ? reportData.buckets.last.cumulativeNetWorth
+        : 0.0;
+    final bool isGrowthPositive = reportData.growthPercent >= 0;
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -114,10 +139,16 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.trending_up_rounded, color: Colors.white, size: 16),
+                          Icon(
+                            isGrowthPositive
+                                ? Icons.trending_up_rounded
+                                : Icons.trending_down_rounded,
+                            color: Colors.white,
+                            size: 16,
+                          ),
                           const SizedBox(width: 4),
                           Text(
-                            '0.0%',
+                            '${isGrowthPositive ? '+' : ''}${reportData.growthPercent.toStringAsFixed(1)}%',
                             style: AppStyles.bodySmall.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -132,7 +163,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               const SizedBox(height: 20),
 
               // Total Wealth Line Chart Widget
-              const WealthLineChart(),
+              WealthLineChart(reportData: reportData),
               const SizedBox(height: 20),
 
               // Income vs Expense Cashflow Header Summary
@@ -165,11 +196,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            '\$${totalIncome.toStringAsFixed(2)}',
+                            '\$${periodIncome.toStringAsFixed(2)}',
                             style: AppStyles.headingSmall.copyWith(color: AppColors.incomeGreen),
                           ),
                           const SizedBox(height: 2),
-                          Text('Real-time updates', style: AppStyles.bodySmall.copyWith(fontSize: 10)),
+                          Text('This period', style: AppStyles.bodySmall.copyWith(fontSize: 10)),
                         ],
                       ),
                     ),
@@ -202,11 +233,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            '\$${totalExpense.toStringAsFixed(2)}',
+                            '\$${periodExpense.toStringAsFixed(2)}',
                             style: AppStyles.headingSmall.copyWith(color: AppColors.textPrimary),
                           ),
                           const SizedBox(height: 2),
-                          Text('Real-time updates', style: AppStyles.bodySmall.copyWith(fontSize: 10, color: AppColors.textSecondary)),
+                          Text('This period', style: AppStyles.bodySmall.copyWith(fontSize: 10, color: AppColors.textSecondary)),
                         ],
                       ),
                     ),
@@ -216,7 +247,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               const SizedBox(height: 20),
 
               // Income vs Expense Dual Bar Chart Widget
-              const IncomeExpenseBarChart(),
+              IncomeExpenseBarChart(reportData: reportData),
               const SizedBox(height: 32),
             ],
           ),

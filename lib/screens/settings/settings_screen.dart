@@ -15,7 +15,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _biometrics = true;
   bool _pushNotifications = true;
   bool _expenseAlerts = true;
-  String _selectedCurrency = 'USD (\$)';
+  String _selectedCurrency = 'BDT (\৳)';
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +121,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
 
               const SizedBox(height: 32),
-              // Logout Button
               SizedBox(
                 width: double.infinity,
                 height: 52,
