@@ -15,7 +15,9 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dashboard'),
+        title: const Text('My Finances'),
+        centerTitle: true,
+        elevation: 1,
       ),
       // StreamBuilder listens to the Drift stream
       body: StreamBuilder<List<Transaction>>(
