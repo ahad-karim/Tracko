@@ -84,17 +84,19 @@ class _State extends ConsumerState<ReceiveVoiceInputScreen>
     _speech
         .initialize(
           onStatus: (s) {
-            if (s == 'done' || s == 'notListening') {
-              if (mounted) setState(() => _listening = false);
-              _pulse.stop();
-              _pulse.reset();
+            if ((s == 'done' || s == 'notListening') && mounted) {
+              setState(() => _listening = false);
+              _pulse
+                ..stop()
+                ..reset();
             }
           },
           onError: (e) {
             if (mounted) {
               setState(() => _listening = false);
-              _pulse.stop();
-              _pulse.reset();
+              _pulse
+                ..stop()
+                ..reset();
               ScaffoldMessenger.of(
                 context,
               ).showSnackBar(SnackBar(content: Text('Error: ${e.errorMsg}')));
@@ -124,8 +126,9 @@ class _State extends ConsumerState<ReceiveVoiceInputScreen>
     if (_listening) {
       await _speech.stop();
       setState(() => _listening = false);
-      _pulse.stop();
-      _pulse.reset();
+      _pulse
+        ..stop()
+        ..reset();
       _parse(_transcript);
     } else {
       setState(() {
