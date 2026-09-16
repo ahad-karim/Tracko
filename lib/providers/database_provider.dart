@@ -5,3 +5,9 @@ import '../database/database.dart';
 final databaseProvider = Provider((ref) {
   return AppDatabase();
 });
+
+// A stream provider that watches all transactions from the database
+final transactionsStreamProvider = StreamProvider<List<Transaction>>((ref) {
+  final db = ref.watch(databaseProvider);
+  return db.watchAllTransactions();
+});

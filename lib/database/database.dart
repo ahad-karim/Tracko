@@ -9,6 +9,7 @@ part 'database.g.dart';
 class Transactions extends Table {
   IntColumn get id => integer().autoIncrement()();
   RealColumn get amount => real()();
+  TextColumn get title => text().withDefault(const Constant('Untitled'))();
   TextColumn get type => text()(); // 'income' or 'expense'
   TextColumn get category => text()();
   DateTimeColumn get date => dateTime()();
