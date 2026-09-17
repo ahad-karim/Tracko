@@ -12,7 +12,6 @@ class TransactionsScreen extends StatefulWidget {
 
   const TransactionsScreen({
     super.key,
-    //ahad
     required this.transactions,
     this.onAddTransaction,
   });
@@ -47,12 +46,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       backgroundColor: AppColors.surface,
       appBar: AppBar(
         title: const Text('Transactions'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.tune_rounded, color: AppColors.deepPurple),
-            onPressed: () {},
-          ),
-        ],
+
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -89,11 +83,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              // Pill Tab Toggle & Range Dropdown
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Pill Tab Controls
+
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
@@ -108,7 +102,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                       ],
                     ),
                   ),
-                  // Dropdown Range Selector
+
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(

@@ -59,5 +59,14 @@ class CategoryModel {
           iconBackgroundColor: const Color(0xFFFFEBEE),
           progressBarColor: const Color(0xFFE53935),
         ),
+        CategoryModel(
+          id: 'c4',
+          name: 'Entertainment',
+          amountSpent: 0.00,
+          budgetLimit: 300.00,
+          icon: Icons.live_tv_rounded,
+          iconBackgroundColor: const Color(0xFFFFEBEE),
+          progressBarColor: const Color(0xFFE53935),
+        ),
       ];
 }

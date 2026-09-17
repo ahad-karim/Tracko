@@ -32,8 +32,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     );
 
     _controller.forward();
-
-    // Navigate to Login Screen after 2.5 seconds
     Future.delayed(const Duration(milliseconds: 2500), () {
       if (mounted) {
         Navigator.of(context).pushReplacement(
@@ -61,7 +59,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       backgroundColor: AppColors.deepPurple,
       body: Container(
         decoration: const BoxDecoration(
-          gradient: AppColors.balanceCardGradient,
+          color: AppColors.balanceCardGradient,
         ),
         child: Center(
           child: AnimatedBuilder(

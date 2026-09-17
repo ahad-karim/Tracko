@@ -20,7 +20,7 @@ class BalanceCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: AppColors.balanceCardGradient,
+        color: AppColors.balanceCardGradient,
         borderRadius: AppStyles.borderRadiusLarge,
         boxShadow: [
           BoxShadow(
@@ -32,31 +32,7 @@ class BalanceCard extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          // Background decorative circle accent
-          Positioned(
-            right: -20,
-            top: -20,
-            child: Container(
-              width: 140,
-              height: 140,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.08),
-              ),
-            ),
-          ),
-          Positioned(
-            right: 40,
-            bottom: -40,
-            child: Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.05),
-              ),
-            ),
-          ),
+
           // Content
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,20 +94,9 @@ class BalanceCard extends StatelessWidget {
                           color: Colors.white.withOpacity(0.2),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
-                          Icons.credit_card_rounded,
-                          color: Colors.white,
-                          size: 16,
-                        ),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        '•••• 4829',
-                        style: AppStyles.bodyMedium.copyWith(
-                          color: Colors.white.withOpacity(0.9),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+
                     ],
                   ),
                   GestureDetector(
@@ -139,7 +104,7 @@ class BalanceCard extends StatelessWidget {
                     child: Row(
                       children: [
                         Text(
-                          'Accounts',
+                          '',
                           style: AppStyles.bodySmall.copyWith(
                             color: Colors.white.withOpacity(0.9),
                             fontWeight: FontWeight.w600,

@@ -15,8 +15,6 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
-
-  // Shared state list for transactions
   final List<TransactionModel> _transactions = TransactionModel.dummyTransactions;
 
   void _addTransaction(TransactionModel transaction) {
@@ -169,6 +167,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                           );
                         }
                       },
+
                       child: const Text('Save Transaction'),
                     ),
                   ),

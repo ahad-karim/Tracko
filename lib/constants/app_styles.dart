@@ -3,8 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 class AppStyles {
-  // Border Radius Constants
-  static const double radiusSmall = 8.0;
+
+  static const double radiusSmall = 50.0;
   static const double radiusMedium = 16.0;
   static const double radiusLarge = 24.0;
   static const double radiusExtraLarge = 32.0;
@@ -14,12 +14,11 @@ class AppStyles {
   static final BorderRadius borderRadiusLarge = BorderRadius.circular(radiusLarge);
   static final BorderRadius borderRadiusExtraLarge = BorderRadius.circular(radiusExtraLarge);
 
-  // Padding & Spacing
+
   static const double paddingSmall = 8.0;
   static const double paddingMedium = 16.0;
   static const double paddingLarge = 24.0;
 
-  // Box Shadows
   static List<BoxShadow> cardShadow = [
     BoxShadow(
       color: Colors.black.withOpacity(0.04),
@@ -36,7 +35,6 @@ class AppStyles {
     ),
   ];
 
-  // Text Styles (Using Google Fonts - Poppins)
   static TextStyle displayLarge = GoogleFonts.poppins(
     fontSize: 32,
     fontWeight: FontWeight.bold,

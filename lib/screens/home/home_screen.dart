@@ -31,7 +31,6 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header Row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -67,57 +66,38 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  // Notification Bell with badge
-                  Stack(
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.cardSurface,
-                          shape: BoxShape.circle,
-                          boxShadow: AppStyles.cardShadow,
-                        ),
-                        child: IconButton(
-                          icon: const Icon(Icons.notifications_outlined, color: AppColors.textPrimary),
-                          onPressed: () {},
-                        ),
-                      ),
-                      Positioned(
-                        right: 8,
-                        top: 8,
-                        child: Container(
-                          width: 10,
-                          height: 10,
-                          decoration: const BoxDecoration(
-                            color: AppColors.expenseRed,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.cardSurface,
+                      shape: BoxShape.circle,
+                      boxShadow: AppStyles.cardShadow,
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.notifications_outlined, color: AppColors.textPrimary),
+                      onPressed: () {},
+                    ),
+                  )
                 ],
               ),
               const SizedBox(height: 24),
-              // Balance Card Widget
+
+              // Balance Card
               BalanceCard(
                 totalBalance: currentBalance,
                 percentageIncrease: 0.0,
                 onDetailsTap: onNavigateToReports,
               ),
-              const SizedBox(height: 24),
-              // Quick Actions Row
+              const SizedBox(height: 40),
 
-              const SizedBox(height: 24),
-              // Insight / Motivational Banner
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
+
+              Text(
+                'Recent Transactions',
+                style: AppStyles.headingMedium.copyWith(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              const SizedBox(height: 24),
-
-
               const SizedBox(height: 12),
-              // Transaction list / Empty State
               if (transactions.isEmpty)
                 Container(
                   width: double.infinity,
