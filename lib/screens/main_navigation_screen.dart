@@ -107,7 +107,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                     controller: titleController,
                     decoration: const InputDecoration(
                       labelText: 'Title / Merchant',
-                      hintText: 'e.g. Coffee, Supermarket, Client Payment',
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -116,10 +115,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(
                       labelText: 'Amount (\$)',
-                      hintText: '0.00',
                       prefixText: '\$ ',
                     ),
                   ),
+
                   const SizedBox(height: 14),
                   DropdownButtonFormField<String>(
                     value: selectedCategory,

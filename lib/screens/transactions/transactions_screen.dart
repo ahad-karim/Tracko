@@ -22,7 +22,7 @@ class TransactionsScreen extends StatefulWidget {
 
 class _TransactionsScreenState extends State<TransactionsScreen> {
   int _selectedFilterIndex = 0; // 0: All, 1: Expense, 2: Income
-  String _selectedRange = 'This month';
+
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -54,34 +54,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Search Bar
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.cardSurface,
-                  borderRadius: AppStyles.borderRadiusMedium,
-                  boxShadow: AppStyles.cardShadow,
-                ),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: (val) => setState(() => _searchQuery = val),
-                  decoration: InputDecoration(
-                    hintText: 'Search transaction or category...',
-                    prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textLight),
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear_rounded, size: 18),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() => _searchQuery = '');
-                            },
-                          )
-                        : null,
-                  ),
-                ),
-              ),
               const SizedBox(height: 16),
 
               Row(
@@ -109,30 +81,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                       color: AppColors.cardSurface,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: AppColors.divider),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: _selectedRange,
-                        icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.deepPurple, size: 20),
-                        style: AppStyles.bodySmall.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                        onChanged: (String? newValue) {
-                          if (newValue != null) {
-                            setState(() {
-                              _selectedRange = newValue;
-                            });
-                          }
-                        },
-                        items: <String>['This week', 'This month', 'Custom']
-                            .map<DropdownMenuItem<String>>((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
-                          );
-                        }).toList(),
-                      ),
                     ),
                   ),
                 ],
