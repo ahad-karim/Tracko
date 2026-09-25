@@ -1,0 +1,147 @@
+import 'package:flutter/material.dart';
+import '../../constants/app_colors.dart';
+import '../../constants/app_styles.dart';
+import '../../models/category_model.dart';
+import '../../models/transaction_model.dart';
+import '../../widgets/cards/activity_tile.dart';
+import '../../widgets/cards/category_tile.dart';
+
+class TransactionsScreen extends StatefulWidget {
+  final List<TransactionModel> transactions;
+  final VoidCallback? onAddTransaction;
+
+  const TransactionsScreen({
+    super.key,
+    required this.transactions,
+    this.onAddTransaction,
+  });
+
+  @override
+  State<TransactionsScreen> createState() => _TransactionsScreenState();
+}
+
+class _TransactionsScreenState extends State<TransactionsScreen> {
+  int _selectedFilterIndex = 0; // 0: All, 1: Expense, 2: Income
+
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final categories = CategoryModel.dummyCategories;
+
+    // Filter transactions by tab and search
+    final filteredTransactions = widget.transactions.where((tx) {
+      if (_selectedFilterIndex == 1 && tx.type != TransactionType.expense) return false;
+      if (_selectedFilterIndex == 2 && tx.type != TransactionType.income) return false;
+      if (_searchQuery.isNotEmpty &&
+          !tx.title.toLowerCase().contains(_searchQuery.toLowerCase()) &&
+          !tx.categoryName.toLowerCase().contains(_searchQuery.toLowerCase())) {
+        return false;
+      }
+      return true;
+    }).toList();
+
+    return Scaffold(
+      backgroundColor: AppColors.surface,
+      appBar: AppBar(
+        title: const Text('Transactions'),
+
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 16),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: AppColors.palePurple,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Row(
+                      children: [
+                        _buildFilterPill('All', 0),
+                        _buildFilterPill('Expense', 1),
+                        _buildFilterPill('Income', 2),
+                      ],
+                    ),
+                  ),
+
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.cardSurface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.divider),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              // Category Breakdown Header
+              if (_selectedFilterIndex != 2) ...[
+                Text(
+                  'Category Breakdown',
+                  style: AppStyles.headingMedium,
+                ),
+                const SizedBox(height: 12),
+                ...categories.map((cat) => CategoryTile(category: cat)),
+                const SizedBox(height: 20),
+              ],
+              // All Transactions Header
+              Text(
+                'Transaction History',
+                style: AppStyles.headingMedium,
+              ),
+              const SizedBox(height: 12),
+              if (filteredTransactions.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    children: [
+                      Icon(Icons.search_off_rounded, size: 48, color: AppColors.textLight),
+                      const SizedBox(height: 12),
+                      Text('No transactions found', style: AppStyles.bodyMedium),
+                    ],
+                  ),
+                )
+              else
+                ...filteredTransactions.map((tx) => ActivityTile(transaction: tx)),
+              const SizedBox(height: 32),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterPill(String title, int index) {
+    final isSelected = _selectedFilterIndex == index;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedFilterIndex = index),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.deepPurple : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          title,
+          style: AppStyles.bodySmall.copyWith(
+            color: isSelected ? Colors.white : AppColors.textSecondary,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+}
