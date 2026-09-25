@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_colors.dart';
 
 class AppTheme {
-  static const Color darkHeaderBg = Color(0xFF1F1B2E);
+  static const Color darkHeaderBg = Color.fromARGB(255, 29, 26, 43);
 
   static ThemeData getTheme({bool isDarkMode = false}) {
     final textTheme = GoogleFonts.poppinsTextTheme();
