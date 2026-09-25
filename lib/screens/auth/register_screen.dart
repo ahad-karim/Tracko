@@ -67,11 +67,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '',
-                  style: AppStyles.headingLarge.copyWith(color: AppColors.deepPurple),
-                ),
-
                 const SizedBox(height: 28),
                 CustomTextField(
                   label: 'Full Name',

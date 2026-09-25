@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_styles.dart';
-import '../../utils/report_timeframe_utils.dart';
+import '../report_timeframe_utils.dart';
 
 class IncomeExpenseBarChart extends StatelessWidget {
   final ReportData reportData;
@@ -41,10 +41,7 @@ class IncomeExpenseBarChart extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Income vs Expense', style: AppStyles.headingSmall),
-                  Text(
-                    'Cashflow balance',
-                    style: AppStyles.bodySmall.copyWith(color: AppColors.textSecondary),
-                  ),
+
                 ],
               ),
               const Row(

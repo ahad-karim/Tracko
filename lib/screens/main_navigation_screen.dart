@@ -1,24 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:drift/drift.dart' as drift;
 import '../constants/app_colors.dart';
 import '../models/transaction_model.dart';
-import '../providers/database_provider.dart';
-import '../database/database.dart' as db;
 import 'home/home_screen.dart';
 import 'transactions/transactions_screen.dart';
 import 'reports/reports_screen.dart';
 import 'settings/settings_screen.dart';
 
-class MainNavigationScreen extends ConsumerStatefulWidget {
+class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
 
   @override
-  ConsumerState<MainNavigationScreen> createState() => _MainNavigationScreenState();
+  State<MainNavigationScreen> createState() => _MainNavigationScreenState();
 }
 
-class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
+class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
+  final List<TransactionModel> _transactions = TransactionModel.dummyTransactions;
+
+  void _addTransaction(TransactionModel transaction) {
+    setState(() {
+      _transactions.insert(0, transaction);
+    });
+  }
 
   void _showAddTransactionBottomSheet(BuildContext context) {
     final titleController = TextEditingController();
@@ -104,7 +107,6 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     controller: titleController,
                     decoration: const InputDecoration(
                       labelText: 'Title / Merchant',
-                      hintText: 'e.g. Coffee, Supermarket, Client Payment',
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -113,10 +115,10 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(
                       labelText: 'Amount (\$)',
-                      hintText: '0.00',
                       prefixText: '\$ ',
                     ),
                   ),
+
                   const SizedBox(height: 14),
                   DropdownButtonFormField<String>(
                     value: selectedCategory,
@@ -142,14 +144,21 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                         final title = titleController.text.trim();
                         final amount = double.tryParse(amountController.text.trim()) ?? 0.0;
                         if (title.isNotEmpty && amount > 0) {
-                          ref.read(databaseProvider).insertTransaction(
-                            db.TransactionsCompanion.insert(
+                          _addTransaction(
+                            TransactionModel(
+                              id: DateTime.now().millisecondsSinceEpoch.toString(),
+                              title: title,
+                              categoryName: selectedCategory,
                               amount: amount,
-                              title: drift.Value(title),
-                              type: selectedType == TransactionType.income ? 'income' : 'expense',
-                              category: selectedCategory,
                               date: DateTime.now(),
-                            )
+                              type: selectedType,
+                              icon: selectedType == TransactionType.income
+                                  ? Icons.account_balance_wallet_rounded
+                                  : Icons.shopping_bag_rounded,
+                              iconBackgroundColor: selectedType == TransactionType.income
+                                  ? const Color(0xFFE8F5E9)
+                                  : const Color(0xFFF0ECF6),
+                            ),
                           );
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -157,6 +166,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                           );
                         }
                       },
+
                       child: const Text('Save Transaction'),
                     ),
                   ),
@@ -171,9 +181,6 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final transactionsAsyncValue = ref.watch(transactionsStreamProvider);
-    final _transactions = transactionsAsyncValue.valueOrNull?.map((e) => TransactionModel.fromDrift(e)).toList() ?? [];
-
     final screens = [
       HomeScreen(
         transactions: _transactions,

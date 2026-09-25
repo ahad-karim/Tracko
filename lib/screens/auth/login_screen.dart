@@ -52,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
-                // App Logo
+
                 Center(
                   child: Container(
                     width: 150,
@@ -89,7 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: AppStyles.bodyMedium,
                 ),
                 const SizedBox(height: 36),
-                // Email Field
+
                 CustomTextField(
                   label: 'Email Address',
                   hint: 'enter your email',
@@ -104,7 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                 ),
                 const SizedBox(height: 20),
-                // Password Field
+
                 CustomTextField(
                   label: 'Password',
                   hint: 'enter your password',
@@ -119,7 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                 ),
                 const SizedBox(height: 12),
-                // Remember Me & Forgot Password
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -158,14 +158,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
                 const SizedBox(height: 28),
-                // Login Button
+
                 CustomButton(
                   text: 'Log In',
                   isLoading: _isLoading,
                   onPressed: _handleLogin,
                 ),
                 const SizedBox(height: 28),
-                // Divider
+
                 Row(
                   children: [
                     const Expanded(child: Divider(color: AppColors.divider)),
@@ -177,7 +177,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
                 const SizedBox(height: 24),
-                // Social Button (Google only)
+
                 OutlinedButton.icon(
                   onPressed: () => _handleLogin(),
                   icon: const Icon(Icons.g_mobiledata_rounded, size: 28, color: Colors.red),
@@ -192,7 +192,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 36),
-                // Register Redirect
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

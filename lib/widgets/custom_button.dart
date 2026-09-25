@@ -64,7 +64,7 @@ class CustomButton extends StatelessWidget {
       width: width ?? double.infinity,
       height: 54,
       decoration: BoxDecoration(
-        gradient: AppColors.purpleButtonGradient,
+        color: AppColors.purpleButtonGradient,
         borderRadius: AppStyles.borderRadiusMedium,
         boxShadow: [
           BoxShadow(

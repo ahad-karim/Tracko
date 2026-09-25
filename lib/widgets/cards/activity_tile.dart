@@ -23,7 +23,7 @@ class ActivityTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppColors.cardSurface,
+        color: AppColors.palePurple,
         borderRadius: AppStyles.borderRadiusMedium,
         border: Border.all(color: AppColors.divider.withOpacity(0.5)),
       ),
