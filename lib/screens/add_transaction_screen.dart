@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:drift/drift.dart' hide Column; // Hide Drift's Column to avoid clashing with Flutter's UI Column
+import 'package:drift/drift.dart' hide Column;
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../database/database.dart';
 import '../providers/database_provider.dart';
@@ -19,12 +19,12 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   DateTime _selectedDate = DateTime.now();
 
   String _selectedType = 'expense';
-  String _selectedCategory = 'food'; // Default category
+  String _selectedCategory = 'food';
 
-  // A basic list of categories for the dropdown
+
   final List<String> _categories = ['food', 'transport', 'salary', 'utilities', 'other', 'movie'];
 
-  // --- Voice & AI State Variables ---
+
   late stt.SpeechToText _speech;
   bool _isListening = false;
   String _spokenText = '';
@@ -33,7 +33,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize the microphone and load the AI brain
+
     _speech = stt.SpeechToText();
     _nlpService.initializeModel();
   }
@@ -44,7 +44,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     super.dispose();
   }
 
-  // --- Voice Logic ---
+
   void _listen() async {
     if (!_isListening) {
       bool available = await _speech.initialize(
@@ -60,16 +60,16 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       if (available) {
         setState(() {
           _isListening = true;
-          _spokenText = 'Listening... Speak now!'; // Initial prompt
+          _spokenText = 'Listening... Speak now!';
         });
         _speech.listen(
           onResult: (result) => setState(() {
-            _spokenText = result.recognizedWords; // Updates UI live as you speak!
+            _spokenText = result.recognizedWords;
           }),
         );
       }
     } else {
-      // Manual stop
+
       setState(() => _isListening = false);
       _speech.stop();
       _processVoiceCommand();
@@ -81,26 +81,26 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
 
     try {
       print("====================================");
-      print("🎤 HEARD: $_spokenText");
+      print("HEARD: $_spokenText");
 
       // 1. Get Category from AI Model
       final category = _nlpService.classifyTransaction(_spokenText);
-      print("🧠 PREDICTED CATEGORY: $category");
+      print("PREDICTED CATEGORY: $category");
 
       // 2. Extract the amount
       final numberMatch = RegExp(r'\d+').firstMatch(_spokenText);
       final amount = numberMatch != null ? double.parse(numberMatch.group(0)!) : 0.0;
-      print("💰 EXTRACTED AMOUNT: $amount");
+      print("EXTRACTED AMOUNT: $amount");
       print("====================================");
 
-      // 3. Update local state variables first
+
       setState(() {
         _amountController.text = amount.toString();
         _selectedCategory = _categories.contains(category) ? category : 'other';
         _selectedType = category == 'salary' ? 'income' : 'expense';
       });
 
-      // 4. Await the database insert completely BEFORE touching navigation
+
       final db = ref.read(databaseProvider);
       final newTransaction = TransactionsCompanion(
         amount: Value(amount),
@@ -111,15 +111,15 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
 
       await db.insertTransaction(newTransaction);
 
-      // 5. Safely check if the screen is still open before popping
+
       if (mounted) {
         Navigator.pop(context);
       }
     } catch (e, stackTrace) {
-      print("❌ CRASH PREVENTED IN VOICE COMMAND: $e");
+      print("CRASH PREVENTED IN VOICE COMMAND: $e");
       print(stackTrace);
 
-      // Reset UI state so it doesn't stay stuck
+
       if (mounted) {
         setState(() {
           _spokenText = 'Error processing speech. Try again.';
@@ -179,7 +179,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // --- Live Speech Display Card ---
+
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -198,7 +198,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Visual indicator for type
+
                 Center(
                   child: CircleAvatar(
                     radius: 40,
@@ -214,7 +214,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // Amount Field
+
                 TextFormField(
                   controller: _amountController,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -241,7 +241,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Type Toggle
+
                 const Text("Transaction Type", style: TextStyle(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 SegmentedButton<String>(
@@ -266,7 +266,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Category Dropdown
+
                 DropdownButtonFormField<String>(
                   value: _selectedCategory,
                   decoration: InputDecoration(
@@ -284,7 +284,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Date Picker field
+
                 InkWell(
                   onTap: () => _selectDate(context),
                   borderRadius: BorderRadius.circular(16),
@@ -302,7 +302,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                 ),
                 const SizedBox(height: 48),
 
-                // Save Button
+
                 FilledButton.icon(
                   onPressed: _saveTransaction,
                   icon: const Icon(Icons.check),
@@ -317,7 +317,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
           ),
         ),
       ),
-      // --- Microphone Button ---
+
       floatingActionButton: FloatingActionButton(
         onPressed: _listen,
         backgroundColor: _isListening ? Colors.red : colorScheme.primary,
