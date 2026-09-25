@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_styles.dart';
+import '../../main.dart';
 import '../auth/login_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
   @override
   State<StatefulWidget> createState() {
-    // TODO: implement createState
     return _SettingsScreenState();
   }
 }
@@ -31,6 +31,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _buildProfileCard(),
               const SizedBox(height: 24),
               _buildSectionHeader('PREFERENCES'),
+              _buildDarkModeTile(),
               _buildCurrencyTile(),
               const SizedBox(height: 24),
               _buildSectionHeader('NOTIFICATIONS'),
@@ -101,6 +102,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
           letterSpacing: 1.2,
         ),
       ),
+    );
+  }
+
+  Widget _buildDarkModeTile() {
+    return ValueListenableBuilder<bool>(
+      valueListenable: isDarkModeNotifier,
+      builder: (context, isDarkMode, child) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          decoration: BoxDecoration(
+            color: AppColors.cardSurface,
+            borderRadius: AppStyles.borderRadiusMedium,
+            border: Border.all(color: AppColors.divider.withOpacity(0.5)),
+          ),
+          child: SwitchListTile(
+            activeColor: AppColors.primaryPurple,
+            secondary: const Icon(
+              Icons.dark_mode_rounded,
+              color: AppColors.deepPurple,
+              size: 22,
+            ),
+            title: Text(
+              'Dark Mode ',
+              style: AppStyles.bodyMedium.copyWith(
+                fontWeight: FontWeight.w500,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            value: isDarkMode,
+            onChanged: (value) {
+              isDarkModeNotifier.value = value;
+            },
+          ),
+        );
+      },
     );
   }
 
