@@ -1,33 +1,72 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:drift/drift.dart' as drift;
+import 'package:speech_to_text/speech_to_text.dart';
 import '../constants/app_colors.dart';
 import '../models/transaction_model.dart';
+import '../providers/database_provider.dart';
+import '../database/database.dart' as db;
+import '../services/nlp_service.dart';
 import 'home/home_screen.dart';
 import 'transactions/transactions_screen.dart';
 import 'reports/reports_screen.dart';
 import 'settings/settings_screen.dart';
 
-class MainNavigationScreen extends StatefulWidget {
+class MainNavigationScreen extends ConsumerStatefulWidget {
   const MainNavigationScreen({super.key});
 
   @override
-  State<MainNavigationScreen> createState() => _MainNavigationScreenState();
+  ConsumerState<MainNavigationScreen> createState() => _MainNavigationScreenState();
 }
 
-class _MainNavigationScreenState extends State<MainNavigationScreen> {
+class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   int _currentIndex = 0;
-  final List<TransactionModel> _transactions = TransactionModel.dummyTransactions;
+  
+  final NLPService _nlpService = NLPService();
+  final SpeechToText _speechToText = SpeechToText();
+  bool _speechEnabled = false;
 
-  void _addTransaction(TransactionModel transaction) {
-    setState(() {
-      _transactions.insert(0, transaction);
-    });
+  @override
+  void initState() {
+    super.initState();
+    _initServices();
+  }
+
+  Future<void> _initServices() async {
+    await _nlpService.initializeModel();
+    _speechEnabled = await _speechToText.initialize();
   }
 
   void _showAddTransactionBottomSheet(BuildContext context) {
     final titleController = TextEditingController();
     final amountController = TextEditingController();
     TransactionType selectedType = TransactionType.expense;
-    String selectedCategory = 'Groceries';
+    String selectedCategory = 'Food';
+    
+    bool isListening = false;
+    Timer? recordTimer;
+
+    void saveTransaction() {
+      final title = titleController.text.trim();
+      final amount = double.tryParse(amountController.text.trim()) ?? 0.0;
+      if (title.isNotEmpty && amount > 0) {
+        final dbInstance = ref.read(databaseProvider);
+        dbInstance.insertTransaction(
+          db.TransactionsCompanion.insert(
+            title: drift.Value(title),
+            amount: amount,
+            category: selectedCategory,
+            date: DateTime.now(),
+            type: selectedType == TransactionType.income ? 'income' : 'expense',
+          ),
+        );
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Transaction added successfully!')),
+        );
+      }
+    }
 
     showModalBottomSheet(
       context: context,
@@ -39,6 +78,74 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
+          
+            void stopListeningAndProcess({bool cancel = false, bool autoSave = false}) async {
+              recordTimer?.cancel();
+              if (_speechToText.isListening) {
+                await _speechToText.stop();
+              }
+              setModalState(() => isListening = false);
+              
+              if (cancel) {
+                titleController.text = "";
+                return;
+              }
+              
+              String text = titleController.text.trim();
+              if (text.isEmpty) return;
+
+              // Extract amount
+              final RegExp numRegex = RegExp(r'\d+(\.\d+)?');
+              final match = numRegex.firstMatch(text);
+              if (match != null) {
+                amountController.text = match.group(0)!;
+              }
+              
+              // Extract category using NLP
+              String category = _nlpService.classifyTransaction(text);
+              
+              // Determine Income or Expense
+              if (category == 'salary') {
+                selectedType = TransactionType.income;
+                selectedCategory = 'Salary'; 
+              } else {
+                selectedType = TransactionType.expense;
+                selectedCategory = category[0].toUpperCase() + category.substring(1).toLowerCase();
+              }
+              
+              setModalState(() {});
+              
+              if (autoSave) {
+                Future.delayed(const Duration(milliseconds: 300), () {
+                  saveTransaction();
+                });
+              }
+            }
+
+            void startListening() async {
+              if (!_speechEnabled) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Speech recognition is not available on this device.')),
+                );
+                return;
+              }
+              
+              titleController.text = "";
+              setModalState(() => isListening = true);
+              
+              await _speechToText.listen(
+                onResult: (result) {
+                  titleController.text = result.recognizedWords;
+                },
+              );
+              
+              recordTimer = Timer(const Duration(seconds: 10), () {
+                if (isListening) {
+                  stopListeningAndProcess(autoSave: true);
+                }
+              });
+            }
+
             return Padding(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom + 20,
@@ -64,6 +171,47 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                       IconButton(
                         icon: const Icon(Icons.close_rounded),
                         onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            if (isListening) {
+                              stopListeningAndProcess(cancel: true);
+                            } else {
+                              startListening();
+                            }
+                          },
+                          icon: Icon(isListening ? Icons.mic_off_rounded : Icons.mic_rounded, size: 20),
+                          label: Text(isListening ? 'Cancel' : 'Voice'),
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: isListening ? AppColors.primaryPurple : Colors.transparent,
+                            foregroundColor: isListening ? Colors.white : AppColors.primaryPurple,
+                            side: BorderSide(color: AppColors.primaryPurple.withValues(alpha: 0.5)),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            // TODO: Implement image scanning
+                          },
+                          icon: const Icon(Icons.document_scanner_rounded, size: 20),
+                          label: const Text('Scan'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primaryPurple,
+                            side: BorderSide(color: AppColors.primaryPurple.withValues(alpha: 0.5)),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -124,12 +272,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                     value: selectedCategory,
                     decoration: const InputDecoration(labelText: 'Category'),
                     items: const [
-                      DropdownMenuItem(value: 'Groceries', child: Text('Groceries')),
+                      DropdownMenuItem(value: 'Food', child: Text('Food')),
                       DropdownMenuItem(value: 'Transport', child: Text('Transport')),
-                      DropdownMenuItem(value: 'Rent & Utilities', child: Text('Rent & Utilities')),
-                      DropdownMenuItem(value: 'Impulse Buys', child: Text('Impulse Buys')),
-                      DropdownMenuItem(value: 'Income', child: Text('Income')),
-                      DropdownMenuItem(value: 'Entertainment', child: Text('Entertainment')),
+                      DropdownMenuItem(value: 'Salary', child: Text('Salary')),
+                      DropdownMenuItem(value: 'Utilities', child: Text('Utilities')),
+                      DropdownMenuItem(value: 'Movie', child: Text('Movie')),
+                      DropdownMenuItem(value: 'Other', child: Text('Other')),
                     ],
                     onChanged: (value) {
                       if (value != null) setModalState(() => selectedCategory = value);
@@ -141,29 +289,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                     height: 50,
                     child: ElevatedButton(
                       onPressed: () {
-                        final title = titleController.text.trim();
-                        final amount = double.tryParse(amountController.text.trim()) ?? 0.0;
-                        if (title.isNotEmpty && amount > 0) {
-                          _addTransaction(
-                            TransactionModel(
-                              id: DateTime.now().millisecondsSinceEpoch.toString(),
-                              title: title,
-                              categoryName: selectedCategory,
-                              amount: amount,
-                              date: DateTime.now(),
-                              type: selectedType,
-                              icon: selectedType == TransactionType.income
-                                  ? Icons.account_balance_wallet_rounded
-                                  : Icons.shopping_bag_rounded,
-                              iconBackgroundColor: selectedType == TransactionType.income
-                                  ? const Color(0xFFE8F5E9)
-                                  : const Color(0xFFF0ECF6),
-                            ),
-                          );
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Transaction added successfully!')),
-                          );
+                        if (isListening) {
+                          stopListeningAndProcess(autoSave: true);
+                        } else {
+                          saveTransaction();
                         }
                       },
 
@@ -181,17 +310,29 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final transactionsAsyncValue = ref.watch(transactionsStreamProvider);
+    final userAsyncValue = ref.watch(userStreamProvider);
+    
+    final transactions = transactionsAsyncValue.maybeWhen(
+      data: (driftTxList) => driftTxList.map((tx) => TransactionModel.fromDrift(tx)).toList().reversed.toList(),
+      orElse: () => <TransactionModel>[],
+    );
+    
+    final user = userAsyncValue.valueOrNull;
+    final totalBalance = user?.currentWalletAmount ?? 0.0;
+
     final screens = [
       HomeScreen(
-        transactions: _transactions,
+        transactions: transactions,
+        user: user,
         onNavigateToTransactions: () => setState(() => _currentIndex = 1),
         onNavigateToReports: () => setState(() => _currentIndex = 2),
       ),
       TransactionsScreen(
-        transactions: _transactions,
+        transactions: transactions,
         onAddTransaction: () => _showAddTransactionBottomSheet(context),
       ),
-      ReportsScreen(transactions: _transactions),
+      ReportsScreen(transactions: transactions),
       const SettingsScreen(),
     ];
 

@@ -4,24 +4,25 @@ import '../../constants/app_styles.dart';
 import '../../models/transaction_model.dart';
 import '../../widgets/cards/activity_tile.dart';
 import '../../widgets/cards/balance_card.dart';
+import '../../database/database.dart' as db;
 
 class HomeScreen extends StatelessWidget {
   final List<TransactionModel> transactions;
+  final db.User? user;
   final VoidCallback? onNavigateToTransactions;
   final VoidCallback? onNavigateToReports;
 
   const HomeScreen({
     super.key,
     required this.transactions,
+    this.user,
     this.onNavigateToTransactions,
     this.onNavigateToReports,
   });
 
   @override
   Widget build(BuildContext context) {
-    final double totalIncome = transactions.where((tx) => tx.isIncome).fold(0.0, (sum, tx) => sum + tx.amount);
-    final double totalExpense = transactions.where((tx) => !tx.isIncome).fold(0.0, (sum, tx) => sum + tx.amount);
-    final double currentBalance = totalIncome - totalExpense;
+    final double currentBalance = user?.currentWalletAmount ?? 0.0;
 
     return Scaffold(
       backgroundColor: AppColors.surface,

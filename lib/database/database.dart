@@ -9,6 +9,7 @@ part 'database.g.dart';
 class Transactions extends Table {
   IntColumn get id => integer().autoIncrement()();
   RealColumn get amount => real()();
+  TextColumn get title => text().withDefault(const Constant('Untitled'))();
   TextColumn get type => text()();
   TextColumn get category => text()();
   DateTimeColumn get date => dateTime()();
@@ -28,7 +29,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration {
@@ -46,13 +47,30 @@ class AppDatabase extends _$AppDatabase {
             UsersCompanion.insert(name: 'Default User', email: 'user@example.com'),
           );
         }
+        if (from < 3) {
+          await m.addColumn(transactions, transactions.title);
+        }
+        if (from < 4) {
+          // Clear all transactions to reset category mappings
+          await customStatement('DELETE FROM transactions;');
+          // Reset user balances
+          await (update(users)..where((tbl) => tbl.id.equals(1))).write(
+            const UsersCompanion(
+              totalIncome: Value(0.0),
+              totalExpense: Value(0.0),
+              currentWalletAmount: Value(0.0),
+            ),
+          );
+        }
       },
     );
   }
 
   Future<List<Transaction>> getAllTransactions() => select(transactions).get();
+  Stream<List<Transaction>> watchAllTransactions() => select(transactions).watch();
   
   Future<User> getUser() => (select(users)..where((tbl) => tbl.id.equals(1))).getSingle();
+  Stream<User> watchUser() => (select(users)..where((tbl) => tbl.id.equals(1))).watchSingle();
 
   Future<void> _updateUserBalances() async {
     final allTx = await getAllTransactions();

@@ -28,7 +28,24 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final categories = CategoryModel.dummyCategories;
+    // Calculate actual category spending from transactions
+    final categories = CategoryModel.dummyCategories.map((cat) {
+      double spent = 0;
+      for (var tx in widget.transactions) {
+        if (!tx.isIncome && tx.categoryName.toLowerCase() == cat.name.toLowerCase()) {
+          spent += tx.amount;
+        }
+      }
+      return CategoryModel(
+        id: cat.id,
+        name: cat.name,
+        amountSpent: spent,
+        budgetLimit: cat.budgetLimit,
+        icon: cat.icon,
+        iconBackgroundColor: cat.iconBackgroundColor,
+        progressBarColor: cat.progressBarColor,
+      );
+    }).toList();
 
     // Filter transactions by tab and search
     final filteredTransactions = widget.transactions.where((tx) {
@@ -56,10 +73,25 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             children: [
               const SizedBox(height: 16),
 
+              TextField(
+                controller: _searchController,
+                onChanged: (val) => setState(() => _searchQuery = val),
+                decoration: InputDecoration(
+                  hintText: 'Search transactions...',
+                  prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textLight),
+                  filled: true,
+                  fillColor: AppColors.cardSurface,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                ),
+              ),
+              const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
@@ -74,20 +106,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                       ],
                     ),
                   ),
-
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppColors.cardSurface,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppColors.divider),
-                    ),
-                  ),
                 ],
               ),
               const SizedBox(height: 24),
               // Category Breakdown Header
-              if (_selectedFilterIndex != 2) ...[
+              if (_selectedFilterIndex != 2 && _selectedFilterIndex != 1) ...[
                 Text(
                   'Category Breakdown',
                   style: AppStyles.headingMedium,
