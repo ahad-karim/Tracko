@@ -3,14 +3,17 @@ import '../../constants/app_colors.dart';
 import '../../constants/app_styles.dart';
 import '../auth/login_screen.dart';
 
-class SettingsScreen extends StatefulWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../services/auth_service.dart';
+
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _darkMode = false;
   bool _biometrics = true;
   bool _pushNotifications = true;
@@ -61,14 +64,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'MD. Adnan Hossain',
+                            ref.watch(authServiceProvider).currentUser?.displayName ?? 'Tracko User',
                             style: AppStyles.headingSmall.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'adnan@gmail.com',
+                            ref.watch(authServiceProvider).currentUser?.email ?? 'user@tracko.com',
                             style: AppStyles.bodySmall,
                           ),
                           const SizedBox(height: 8),
@@ -138,14 +141,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                           ElevatedButton(
                             style: ElevatedButton.styleFrom(backgroundColor: AppColors.expenseRed),
-                            onPressed: () {
+                            onPressed: () async {
+                              await ref.read(authServiceProvider).signOut();
+                              if (!context.mounted) return;
                               Navigator.pop(context);
                               Navigator.of(context).pushAndRemoveUntil(
                                 MaterialPageRoute(builder: (context) => const LoginScreen()),
                                 (route) => false,
                               );
                             },
-                            child: const Text('Log Out'),
+                            child: const Text('Log Out', style: TextStyle(color: Colors.white)),
                           ),
                         ],
                       ),

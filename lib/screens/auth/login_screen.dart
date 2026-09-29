@@ -4,38 +4,69 @@ import '../../constants/app_styles.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../main_navigation_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../services/auth_service.dart';
 import 'register_screen.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController(text: '');
   final _passwordController = TextEditingController(text: '');
   bool _rememberMe = true;
   bool _isLoading = false;
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+      setState(() => _isLoading = true);
 
-      Future.delayed(const Duration(milliseconds: 800), () {
+      try {
+        final authService = ref.read(authServiceProvider);
+        await authService.signInWithEmail(
+          _emailController.text.trim(),
+          _passwordController.text,
+        );
         if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
           );
         }
-      });
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Login failed: ${e.toString()}')),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _handleGoogleLogin() async {
+    setState(() => _isLoading = true);
+    try {
+      final authService = ref.read(authServiceProvider);
+      final userCred = await authService.signInWithGoogle();
+      if (userCred != null && mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Google Sign-In failed: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -179,7 +210,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 24),
 
                 OutlinedButton.icon(
-                  onPressed: () => _handleLogin(),
+                  onPressed: _isLoading ? null : _handleGoogleLogin,
                   icon: const Icon(Icons.g_mobiledata_rounded, size: 28, color: Colors.red),
                   label: Text('Continue with Google', style: AppStyles.bodyMedium),
                   style: OutlinedButton.styleFrom(
