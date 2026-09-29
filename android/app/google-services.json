@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "273216300444",
+    "project_id": "tracko-fccef",
+    "storage_bucket": "tracko-fccef.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:273216300444:android:8980401de6b4622beb5459",
+        "android_client_info": {
+          "package_name": "com.example.tracko"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "273216300444-jlhib314q20n98mu4tm315v261t41mcs.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDjNNgfRuKkQr8iQNSqwSNdwpc5R6Rrk0g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "273216300444-jlhib314q20n98mu4tm315v261t41mcs.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "273216300444-g27nrcc7geudd4n7075a3vov1hnmkld1.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.trackoProject"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
