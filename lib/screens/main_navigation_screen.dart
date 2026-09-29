@@ -48,17 +48,21 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     Timer? recordTimer;
 
     void saveTransaction() {
-      final title = titleController.text.trim();
+      final rawTitle = titleController.text.trim();
       final amount = double.tryParse(amountController.text.trim()) ?? 0.0;
-      if (title.isNotEmpty && amount > 0) {
+      final typeString = selectedType == TransactionType.income ? 'income' : 'expense';
+      final finalCategory = selectedType == TransactionType.income ? 'Income' : selectedCategory;
+      final finalTitle = rawTitle.isEmpty ? finalCategory : rawTitle;
+
+      if (amount > 0) {
         final dbInstance = ref.read(databaseProvider);
         dbInstance.insertTransaction(
           db.TransactionsCompanion.insert(
-            title: drift.Value(title),
+            title: drift.Value(finalTitle),
             amount: amount,
-            category: selectedCategory,
+            category: finalCategory,
             date: DateTime.now(),
-            type: selectedType == TransactionType.income ? 'income' : 'expense',
+            type: typeString,
           ),
         );
         Navigator.pop(context);
@@ -105,9 +109,9 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               String category = _nlpService.classifyTransaction(text);
               
               // Determine Income or Expense
-              if (category == 'salary') {
+              if (category == 'salary' || category.toLowerCase() == 'income') {
                 selectedType = TransactionType.income;
-                selectedCategory = 'Salary'; 
+                selectedCategory = 'Income'; 
               } else {
                 selectedType = TransactionType.expense;
                 selectedCategory = category[0].toUpperCase() + category.substring(1).toLowerCase();
@@ -229,7 +233,14 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                             fontWeight: FontWeight.w600,
                           ),
                           onSelected: (selected) {
-                            if (selected) setModalState(() => selectedType = TransactionType.expense);
+                            if (selected) {
+                              setModalState(() {
+                                selectedType = TransactionType.expense;
+                                if (selectedCategory == 'Income') {
+                                  selectedCategory = 'Food';
+                                }
+                              });
+                            }
                           },
                         ),
                       ),
@@ -244,7 +255,12 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                             fontWeight: FontWeight.w600,
                           ),
                           onSelected: (selected) {
-                            if (selected) setModalState(() => selectedType = TransactionType.income);
+                            if (selected) {
+                              setModalState(() {
+                                selectedType = TransactionType.income;
+                                selectedCategory = 'Income';
+                              });
+                            }
                           },
                         ),
                       ),
@@ -267,22 +283,23 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 14),
-                  DropdownButtonFormField<String>(
-                    value: selectedCategory,
-                    decoration: const InputDecoration(labelText: 'Category'),
-                    items: const [
-                      DropdownMenuItem(value: 'Food', child: Text('Food')),
-                      DropdownMenuItem(value: 'Transport', child: Text('Transport')),
-                      DropdownMenuItem(value: 'Salary', child: Text('Salary')),
-                      DropdownMenuItem(value: 'Utilities', child: Text('Utilities')),
-                      DropdownMenuItem(value: 'Movie', child: Text('Movie')),
-                      DropdownMenuItem(value: 'Other', child: Text('Other')),
-                    ],
-                    onChanged: (value) {
-                      if (value != null) setModalState(() => selectedCategory = value);
-                    },
-                  ),
+                  if (selectedType == TransactionType.expense) ...[
+                    const SizedBox(height: 14),
+                    DropdownButtonFormField<String>(
+                      value: selectedCategory,
+                      decoration: const InputDecoration(labelText: 'Category'),
+                      items: const [
+                        DropdownMenuItem(value: 'Food', child: Text('Food')),
+                        DropdownMenuItem(value: 'Transport', child: Text('Transport')),
+                        DropdownMenuItem(value: 'Utilities', child: Text('Utilities')),
+                        DropdownMenuItem(value: 'Movie', child: Text('Movie')),
+                        DropdownMenuItem(value: 'Other', child: Text('Other')),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) setModalState(() => selectedCategory = value);
+                      },
+                    ),
+                  ],
                   const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
