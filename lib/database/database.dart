@@ -13,6 +13,7 @@ class Transactions extends Table {
   TextColumn get type => text()();
   TextColumn get category => text()();
   DateTimeColumn get date => dateTime()();
+  IntColumn get userId => integer().references(Users, #id).withDefault(const Constant(1))();
 }
 
 class Users extends Table {
@@ -29,7 +30,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration {
@@ -61,6 +62,9 @@ class AppDatabase extends _$AppDatabase {
               currentWalletAmount: Value(0.0),
             ),
           );
+        }
+        if (from < 5) {
+          await m.addColumn(transactions, transactions.userId);
         }
       },
     );

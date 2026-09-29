@@ -40,6 +40,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         await authService.signUpWithEmail(
           _emailController.text.trim(),
           _passwordController.text,
+          _nameController.text.trim(),
         );
         
         if (mounted) {

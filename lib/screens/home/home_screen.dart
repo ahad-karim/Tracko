@@ -5,6 +5,8 @@ import '../../models/transaction_model.dart';
 import '../../widgets/cards/activity_tile.dart';
 import '../../widgets/cards/balance_card.dart';
 import '../../database/database.dart' as db;
+import 'package:firebase_auth/firebase_auth.dart' hide User;
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HomeScreen extends StatelessWidget {
   final List<TransactionModel> transactions;
@@ -53,11 +55,30 @@ class HomeScreen extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Adnan',
-                            style: AppStyles.headingMedium.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                          FutureBuilder<QuerySnapshot>(
+                            future: FirebaseFirestore.instance
+                                .collection('users')
+                                .where('email', isEqualTo: FirebaseAuth.instance.currentUser?.email)
+                                .limit(1)
+                                .get(),
+                            builder: (context, snapshot) {
+                              String name = FirebaseAuth.instance.currentUser?.displayName ?? 
+                                  (FirebaseAuth.instance.currentUser?.email?.split('@')[0] ?? 'User');
+                              
+                              if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+                                final data = snapshot.data!.docs.first.data() as Map<String, dynamic>?;
+                                if (data != null && data.containsKey('name')) {
+                                  name = data['name'];
+                                }
+                              }
+
+                              return Text(
+                                name,
+                                style: AppStyles.headingMedium.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              );
+                            },
                           ),
                           Text(
                             'TRACKO',
