@@ -1,13 +1,16 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/drift.dart' as drift;
 import 'package:speech_to_text/speech_to_text.dart';
+import 'package:image_picker/image_picker.dart';
 import '../constants/app_colors.dart';
 import '../models/transaction_model.dart';
 import '../providers/database_provider.dart';
 import '../database/database.dart' as db;
 import '../services/nlp_service.dart';
+import '../services/groq_service.dart';
 import 'home/home_screen.dart';
 import 'transactions/transactions_screen.dart';
 import 'reports/reports_screen.dart';
@@ -68,6 +71,10 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Transaction added successfully!')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Invalid amount. Transaction not saved.')),
         );
       }
     }
@@ -150,6 +157,96 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               });
             }
 
+            void scanReceipt() async {
+              final source = await showDialog<ImageSource>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Select Image Source'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.camera_alt),
+                        title: const Text('Camera'),
+                        onTap: () => Navigator.pop(ctx, ImageSource.camera),
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.photo_library),
+                        title: const Text('Gallery'),
+                        onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+
+              if (source == null) return;
+
+              try {
+                final picker = ImagePicker();
+                final image = await picker.pickImage(source: source);
+                if (image != null) {
+                  // Show loading
+                  showDialog(
+                    context: context, 
+                    barrierDismissible: false,
+                    builder: (ctx) => const Center(child: CircularProgressIndicator())
+                  );
+                  
+                  try {
+                    final bytes = await image.readAsBytes();
+                    final base64Image = base64Encode(bytes);
+                    final groqService = GroqService();
+                    final result = await groqService.extractTransactionFromImage(base64Image);
+                    
+                    Navigator.pop(context); // Close loading dialog
+                    
+                    if (result != null) {
+                      final parsedTitle = result['title']?.toString() ?? '';
+                      String parsedAmount = result['amount']?.toString() ?? '0';
+                      parsedAmount = parsedAmount.replaceAll(RegExp(r'[^\d.]'), '');
+                      if (parsedAmount.isEmpty || parsedAmount == '.') parsedAmount = '0';
+                      
+                      final parsedCategory = result['category']?.toString() ?? 'Other';
+                      
+                      titleController.text = parsedTitle;
+                      amountController.text = parsedAmount;
+                      
+                      String newCategory = 'Other';
+                      final validCategories = ['Food', 'Transport', 'Utilities', 'Movie', 'Other'];
+                      if (validCategories.contains(parsedCategory)) {
+                        newCategory = parsedCategory;
+                      } else {
+                        final match = validCategories.where((c) => c.toLowerCase() == parsedCategory.toLowerCase()).toList();
+                        if (match.isNotEmpty) newCategory = match.first;
+                      }
+                      
+                      setModalState(() {
+                        selectedType = TransactionType.expense;
+                        selectedCategory = newCategory;
+                      });
+                      
+                      // Automatically save after successfully extracting
+                      saveTransaction();
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Failed to extract data from image.')),
+                      );
+                    }
+                  } catch (e) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error processing image: $e')),
+                    );
+                  }
+                }
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error launching picker: $e')),
+                );
+              }
+            }
+
             return Padding(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom + 20,
@@ -204,9 +301,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () {
-                            // TODO: Implement image scanning
-                          },
+                          onPressed: scanReceipt,
                           icon: const Icon(Icons.document_scanner_rounded, size: 20),
                           label: const Text('Scan'),
                           style: OutlinedButton.styleFrom(

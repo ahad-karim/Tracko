@@ -3,8 +3,8 @@ import '../../constants/app_colors.dart';
 import '../../constants/app_styles.dart';
 import '../../main.dart';
 import '../auth/login_screen.dart';
+import '../../services/auth_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../providers/database_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -49,11 +49,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildProfileCard(BuildContext context) {
-    final userAsyncValue = ref.watch(userStreamProvider);
-    final user = userAsyncValue.valueOrNull;
+    final firebaseUserAsyncValue = ref.watch(authStateProvider);
+    final firebaseUser = firebaseUserAsyncValue.valueOrNull;
     
-    final userName = user?.name ?? 'Guest User';
-    final userEmail = user?.email ?? 'Not Available';
+    final userEmail = firebaseUser?.email ?? 'Not Available';
+    
+    String userName = 'Guest User';
+    if (firebaseUser?.email != null) {
+      final userNameAsyncValue = ref.watch(userNameProvider(firebaseUser!.email!));
+      userName = userNameAsyncValue.valueOrNull ?? firebaseUser.displayName ?? 'Guest User';
+    }
 
     return Container(
       width: double.infinity,
@@ -243,12 +248,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.expenseRed),
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(context);
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                  (route) => false,
-                );
+                await ref.read(authServiceProvider).signOut();
+                if (context.mounted) {
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    (route) => false,
+                  );
+                }
               },
               child: const Text('Log Out'),
             ),

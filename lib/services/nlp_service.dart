@@ -7,14 +7,16 @@ class NLPService {
 
   final List<String> _vocab = [
     '', '[UNK]', 'taka', 'i', 'on', 'for', 'just', 'it', 'cost', 'paid',
-    'spent', 'bought', 'a', 'tickets', 'an', 'got', 'bill', 'cinema',
-    'cleared', 'film', 'movie', 'took', 'tutoring', 'salary', 'my',
-    'domain', 'cloudns', 'received', 'internet', 'rickshaw', 'ordered',
-    'from', 'ticket', 'bus', 'purchased', 'paycheck', 'money', 'freelance',
-    'uber', 'ride', 'water', 'earned', 'the', 'made', 'electric', 'daraz',
-    'cash', 'ate', 'at', 'plectrums', 'guitar', 'spotify', 'plan',
-    'family', 'watch', 'strap', 'new', 'unique', 'flavours', 'grabbed',
-    'clothes', 'lunch', 'japanese', 'food', 'burger', 'shawarma', 'gyro', 'bhai'
+    'spent', 'bought', 'a', 'got', 'an', 'cleared', 'salary', 'bill',
+    'movie', 'tickets', 'ticket', 'ordered', 'from', 'took', 'earned',
+    'received', 'purchased', 'made', 'ate', 'at', 'grabbed', 'film',
+    'paycheck', 'cash', 'shopping', 'domain', 'cloudns', 'the', 'electric',
+    'daraz', 'tutoring', 'spotify', 'plan', 'my', 'family', 'watch', 'strap',
+    'new', 'electricity', 'water', 'internet', 'clothes', 'wifi', 'netflix',
+    'cinema', 'bonus', 'taxi', 'uber', 'pathao', 'theatre', 'plectrums',
+    'guitar', 'rickshaw', 'money', 'freelance', 'bus', 'cng', 'ride', 'dinner',
+    'unique', 'flavours', 'gyro', 'bhai', 'lunch', 'coffee', 'shawarma',
+    'burgers', 'japanese', 'food', 'pizza', 'burger', 'snacks'
   ];
 
   final List<String> _categories = [
