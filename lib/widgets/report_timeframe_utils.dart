@@ -126,12 +126,14 @@ ReportData buildReportData(
     );
   }
 
-  final double endingWealth = buckets.isNotEmpty ? buckets.last.cumulativeNetWorth : startingWealth;
+  final double totalIncome = buckets.fold(0, (sum, b) => sum + b.income);
+  final double totalExpense = buckets.fold(0, (sum, b) => sum + b.expense);
+  
   double growthPercent;
-  if (startingWealth == 0) {
-    growthPercent = endingWealth == 0 ? 0.0 : 100.0;
+  if (totalExpense == 0) {
+    growthPercent = totalIncome == 0 ? 0.0 : 100.0;
   } else {
-    growthPercent = ((endingWealth - startingWealth) / startingWealth.abs()) * 100;
+    growthPercent = ((totalIncome - totalExpense) / totalExpense) * 100;
   }
 
   return ReportData(buckets: buckets, growthPercent: growthPercent);

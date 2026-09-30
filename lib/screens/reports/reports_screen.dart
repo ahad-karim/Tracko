@@ -207,7 +207,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 Icon(icon, color: color, size: 16),
                 const SizedBox(width: 4),
                 Text(
-                  '${growthPercent.abs().toStringAsFixed(1)}%',
+                  '${growthPercent.toStringAsFixed(1)}%',
                   style: AppStyles.bodySmall.copyWith(
                     color: color,
                     fontWeight: FontWeight.bold,
